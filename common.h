@@ -2,7 +2,10 @@
 #include "../linux/usr/include/linux/io_uring.h"
 
 #define DEFAULT_CQ_IDX 0
+#define SINK_CQ_IDX 1
+
 #define PROG_OFFSET 0
+
 #define MAX_LOOP 4096
 
 typedef struct _context

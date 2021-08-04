@@ -62,6 +62,8 @@ int __sys_io_uring_register(int fd, unsigned opcode, const void *arg, unsigned n
 // 	}
 // }
 
+#define ARRAY_SIZE(x) ((unsigned)(sizeof(x) / sizeof((x)[0])))
+
 int main(void)
 {
       atomic<uint64_t> count(0);
@@ -76,8 +78,17 @@ int main(void)
 
       constexpr unsigned QUEUE_DEPTH = 1024;
       struct io_uring ring;
-      int rc = io_uring_queue_init(QUEUE_DEPTH, &ring, 0);
-      assert(rc == 0);
+      struct io_uring_params params;
+      uint32_t cq_sizes[2] = {QUEUE_DEPTH, QUEUE_DEPTH};
+
+      memset(&params, 0, sizeof(params));
+      params.nr_cq = ARRAY_SIZE(cq_sizes); //Anzahl von zusätzlichen Completion Queues???
+	params.cq_sizes = (__u64)(unsigned long)cq_sizes; //will hier wohl einen Pointer?! 
+      if (io_uring_queue_init_params(128, &ring, &params) < 0){
+            perror("io_uring_init_failed...\n");
+            exit(1);
+      }
+
       struct io_uring_cqe ** cqes = (struct io_uring_cqe **) malloc(QUEUE_DEPTH * sizeof(struct _io_uring_cqe *));
 
       libbpf_set_print(libbpf_print); //setze libbpf error und debug callback
@@ -85,7 +96,7 @@ int main(void)
 
       struct bpf_object *bpf_obj = bpf_object__open("ebpf.o");
 
-      rc = bpf_object__load(bpf_obj);
+      int rc = bpf_object__load(bpf_obj);
       assert(rc >= 0);
 
       struct bpf_program *bpf_prog = bpf_program__next(NULL, bpf_obj);
@@ -122,7 +133,7 @@ int main(void)
       io_uring_prep_nop(sqe);
 	sqe->off = PROG_OFFSET;
 	sqe->opcode = IORING_OP_BPF;
-      sqe->cq_idx = DEFAULT_CQ_IDX;
+      sqe->cq_idx = SINK_CQ_IDX;
 
       rc = io_uring_submit(&ring);
       if (rc <= 0) {
@@ -130,23 +141,36 @@ int main(void)
             return -1;
       }
 
-      thread t([&]() {
+      printf("First Submit in Userpsace done\n");
+
+      struct io_uring_cqe *cqe;
+
+      rc = io_uring_wait_cqe(&ring, &cqe);
+      io_uring_cqe_seen(&ring, cqe);
+
+        
+      printf("\ncqe->user_data: %llu\n", cqe->user_data);
+      printf("cqe->res: %i\n", cqe->res);
+
+      // thread t([&]() {
 	    
-            int cqe_count = io_uring_wait_cqe_nr(&ring, cqes, batch_size);
-            count += cqe_count;
-            printf("recv %d\n", cqe_count);
-            // assert(cqe_count > 0);
-            io_uring_cq_advance(&ring, cqe_count);
+      //       int cqe_count = io_uring_wait_cqe_nr(&ring, cqes, batch_size);
+      //       count += cqe_count;
+      //       printf("recv %d\n", cqe_count);
+      //       // assert(cqe_count > 0);
+      //       io_uring_cq_advance(&ring, cqe_count);
 
-      });
+      // });
 
-      while(1){
-            sleep(1);
+      // while(1){
+      //       sleep(1);
 
-            // auto c = __sync_fetch_and_and(&context_ptr->count, zero)/1e6;
-            auto c = count.exchange(0)/1e6;
+      //       // auto c = __sync_fetch_and_and(&context_ptr->count, zero)/1e6;
+      //       auto c = count.exchange(0)/1e6;
 
-            cout << c << endl;
-      }
+      //       cout << c << endl;
+      // }
+
+      return 0;
 }     
 

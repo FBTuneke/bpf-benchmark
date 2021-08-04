@@ -43,9 +43,7 @@ SEC("iouring.s/prog") //.s = .is_sleepable = true
 int prog(struct io_uring_bpf_ctx *ctx)
 {
       struct io_uring_sqe sqe;
-	struct io_uring_cqe cqe = {};
       unsigned int key = 0;
-      int ret;
       context_t *context_ptr;
       
       context_ptr = (context_t *) bpf_map_lookup_elem(&context_map, &key); 
@@ -54,6 +52,10 @@ int prog(struct io_uring_bpf_ctx *ctx)
             // iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, 27, 277, 0); //Aus Kernelmodus zurückkehren
             return 0;  
       } 
+
+      iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, context_ptr->batch_size, 8888, 0);
+
+      return 0;
 
       if(context_ptr->batch_size > MAX_LOOP) return 0; //Für Verifier
 
@@ -69,7 +71,7 @@ int prog(struct io_uring_bpf_ctx *ctx)
       if(context_ptr->end == 0){
             //Wieder selbst aufrufen
             io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);  
-            sqe.cq_idx = DEFAULT_CQ_IDX;
+            sqe.cq_idx = SINK_CQ_IDX;
             sqe.user_data = 9004;
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));
       }
