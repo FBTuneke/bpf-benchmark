@@ -57,9 +57,7 @@ int prog(struct io_uring_bpf_ctx *ctx)
 
       // return 0;
 
-      if(context_ptr->batch_size > MAX_LOOP) return 0; //Für Verifier
-
-      for(int i = 0; i < context_ptr->batch_size; i++)
+      for(int i = 0; i < MAX_LOOP; i++)
       {
             io_uring_prep_rw(IORING_OP_WRITE, &sqe, context_ptr->fd, context_ptr->char_to_send_userspace_ptr, 1, 0);
             sqe.cq_idx = DEFAULT_CQ_IDX;

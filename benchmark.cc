@@ -71,7 +71,8 @@ int main(void)
       int fd = open("/dev/null", O_WRONLY);
       unsigned int submitted = 0;
       unsigned int zero = 0;
-      unsigned batch_size = atoi(getenv("BATCHSIZE") ?: "1");
+      // unsigned batch_size = atoi(getenv("BATCHSIZE") ?: "1");
+      unsigned batch_size = MAX_LOOP;
       bool with_link = !!getenv("IO_LINK");
 
       printf("io_uring: BATCHSIZE: %d LINK: %d\n", batch_size, with_link);
