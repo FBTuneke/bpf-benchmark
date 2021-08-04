@@ -3,8 +3,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "common.h"
-#include "../linux/tools/lib/bpf/bpf_helpers.h"
+#include "../common.h"
+#include "../../linux/tools/lib/bpf/bpf_helpers.h"
+#include <sys/socket.h>
+#include <unistd.h>
+
 
 struct bpf_map_def SEC("maps") context_map =
 {
@@ -39,8 +42,10 @@ static inline void io_uring_prep_bpf(struct io_uring_sqe *sqe, __u64 off,  __u64
 	sqe->user_data = user_data;
 }
 
-SEC("iouring.s/prog") //.s = .is_sleepable = true
-int prog(struct io_uring_bpf_ctx *ctx)
+int cnt = 0;
+
+SEC("iouring.s/bpf_bench") //.s = .is_sleepable = true
+int bpf_bench(struct io_uring_bpf_ctx *ctx)
 {
       struct io_uring_sqe sqe;
       unsigned int key = 0;
@@ -48,31 +53,27 @@ int prog(struct io_uring_bpf_ctx *ctx)
       
       context_ptr = (context_t *) bpf_map_lookup_elem(&context_map, &key); 
       if(!context_ptr)
-      {
-            // iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, 27, 277, 0); //Aus Kernelmodus zurückkehren
-            return 0;  
-      } 
+            return 0; 
 
-      // iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, context_ptr->batch_size, 8888, 0);
-
-      // return 0;
-
-      for(int i = 0; i < MAX_LOOP; i++)
+      for(int i = 0; i < 1024; i++)
       {
             io_uring_prep_rw(IORING_OP_WRITE, &sqe, context_ptr->fd, context_ptr->char_to_send_userspace_ptr, 1, 0);
             sqe.cq_idx = DEFAULT_CQ_IDX;
-            if(context_ptr->with_link) sqe.flags = IOSQE_IO_HARDLINK;                 
-            sqe.user_data = 1014;
+            // if(context_ptr->with_link) sqe.flags = IOSQE_IO_HARDLINK;                 
+            sqe.flags = IOSQE_IO_HARDLINK;                 
+            sqe.user_data = i;
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));   
       }
 
-      if(context_ptr->end == 0){
-            //Wieder selbst aufrufen
-            io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);  
+      if(cnt < 1200){
+            io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);
             sqe.cq_idx = SINK_CQ_IDX;
-            sqe.user_data = 9004;
+            sqe.flags = 0;
+            sqe.user_data = 2007;
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));
       }
+
+      cnt++;
     
       return 0;
 }
