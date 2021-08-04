@@ -8,7 +8,7 @@
 #define PROG_OFFSET 0
 #define TEST_PROG_OFFSET 1
 
-#define MAX_LOOP 1024
+#define MAX_LOOP 100000
 
 typedef struct _context
 {

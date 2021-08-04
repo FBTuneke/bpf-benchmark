@@ -55,7 +55,7 @@ int bpf_bench(struct io_uring_bpf_ctx *ctx)
       if(!context_ptr)
             return 0; 
 
-      for(int i = 0; i < 1024; i++)
+      for(int i = 0; i < MAX_LOOP; i++)
       {
             io_uring_prep_rw(IORING_OP_WRITE, &sqe, context_ptr->fd, context_ptr->char_to_send_userspace_ptr, 1, 0);
             sqe.cq_idx = DEFAULT_CQ_IDX;
@@ -65,7 +65,7 @@ int bpf_bench(struct io_uring_bpf_ctx *ctx)
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));   
       }
 
-      if(cnt < 1200){
+      if(cnt < 10){
             io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);
             sqe.cq_idx = SINK_CQ_IDX;
             sqe.flags = 0;

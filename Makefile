@@ -1,9 +1,9 @@
 # VPATH = /media/sf_Studium/Master/Masterthesis/prototyp/ebpf/
 TARGET = benchmark
 # LIBS = -lmrloop -luring -lzstd
-LIBS = -luring -lbpf -lelf -lz
-CC = gcc
-CFLAGS = -O2 -Wall
+LIBS = -luring -lbpf -lpthread
+CC = g++
+CFLAGS = -O3 -Wall
 
 .PHONY: default all clean
 
@@ -13,10 +13,10 @@ all: default
 debug: CFLAGS = -g -Wall
 debug: all
 
-OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+OBJECTS = $(patsubst %.cc, %.o, $(wildcard *.cc))
 HEADERS = $(wildcard *.h)
 
-%.o: %.c $(HEADERS)
+%.o: %.cc $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PRECIOUS: $(TARGET) $(OBJECTS)

@@ -1,8 +1,3 @@
-// #include <cassert>
-// #include <thread>
-// #include <atomic>
-// #include <iostream>
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,13 +12,19 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 
+#include <cassert>
+#include <thread>
+#include <atomic>
+#include <iostream>
+
+
 #define QUEUE_DEPTH 1024
 
 context_t *context_ptr;
 
 #define NR_OF_BPF_PROGS 1
 
-// using namespace std;
+using namespace std;
 
 static void sig_handler(const int sig) 
 {
@@ -77,7 +78,7 @@ int main(void)
       // signal(SIGTERM, sig_handler);
       // signal(SIGINT, sig_handler);
       
-      //atomic<uint64_t> count(0);
+      atomic<uint64_t> count(0);
 
       int fd = open("/dev/null", O_WRONLY);
       // unsigned batch_size = atoi(getenv("BATCHSIZE") ?: "1");
@@ -174,13 +175,13 @@ int main(void)
 
       printf("Vor First Submit aus Userspace\n");
 
-      rc = io_uring_submit(&ring);
-      if (rc <= 0) {
-            printf("sqe submit failed: %i\n", rc);
-            return -1;
-      }
+      // rc = io_uring_submit(&ring);
+      // if (rc <= 0) {
+      //       printf("sqe submit failed: %i\n", rc);
+      //       return -1;
+      // }
 
-      printf("Nach First Submit in Userspace\n");
+      // printf("Nach First Submit in Userspace\n");
 
       struct io_uring_cqe *cqe;
 
@@ -191,18 +192,20 @@ int main(void)
       // printf("\ncqe->user_data: %llu\n", cqe->user_data);
       // printf("cqe->res: %i\n", cqe->res);
 
-      // thread t([&]() {
+      thread t([&]() {
 	    
-      //       int cqe_count = io_uring_wait_cqe_nr(&ring, cqes, batch_size);
-      //       count += cqe_count;
-      //       printf("recv %d\n", cqe_count);
-      //       // assert(cqe_count > 0);
-      //       io_uring_cq_advance(&ring, cqe_count);
+            while(1){
+                  int sqe_count = io_uring_submit_and_wait(&ring, 3000);
+                  int cqe_count = io_uring_peek_batch_cqe(&ring, cqes, 3000);
+                  count += cqe_count;
+                  printf("recv %d\n", cqe_count);
+                  io_uring_cq_advance(&ring, cqe_count);
+            }
 
-      // });
+      });
 
       while(1){
-            // sleep(1);
+            sleep(1);
 
             // int cqe_count = io_uring_wait_cqe_nr(&ring, cqes, 10);
             // int cqe_count = io_uring_wait_cqes(&ring, cqes, 10, NULL, NULL);
@@ -219,16 +222,17 @@ int main(void)
             // io_uring_submit(&ring);
             // printf("New Submit\n");
 
-            int ret = io_uring_wait_cqe(&ring, &cqe);
-            io_uring_cqe_seen(&ring, cqe);
+            // int ret = io_uring_wait_cqe(&ring, &cqe);
+            // io_uring_cqe_seen(&ring, cqe);
             
-            printf("cqe->user_data: %llu\n", cqe->user_data);
-            printf("cqe->res: %i\n", cqe->res);
+            // printf("cqe->user_data: %llu\n", cqe->user_data);
+            // printf("cqe->res: %i\n", cqe->res);
 
-            // auto c = __sync_fetch_and_and(&context_ptr->count, zero)/1e6;
+            // auto c = __sync_fetch_and_and(&context_ptr->count, 0)/1e6;
             // auto c = count.exchange(0)/1e6;
+            auto c = count.exchange(0)/1e6;
 
-            // cout << c << endl;
+            cout << c << endl;
       }
 
       return 0;
