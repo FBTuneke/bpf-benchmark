@@ -53,9 +53,9 @@ int prog(struct io_uring_bpf_ctx *ctx)
             return 0;  
       } 
 
-      iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, context_ptr->batch_size, 8888, 0);
+      // iouring_emit_cqe(ctx, DEFAULT_CQ_IDX, context_ptr->batch_size, 8888, 0);
 
-      return 0;
+      // return 0;
 
       if(context_ptr->batch_size > MAX_LOOP) return 0; //Für Verifier
 

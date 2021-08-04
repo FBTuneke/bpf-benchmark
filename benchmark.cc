@@ -145,12 +145,12 @@ int main(void)
 
       struct io_uring_cqe *cqe;
 
-      rc = io_uring_wait_cqe(&ring, &cqe);
-      io_uring_cqe_seen(&ring, cqe);
+      // rc = io_uring_wait_cqe(&ring, &cqe);
+      // io_uring_cqe_seen(&ring, cqe);
 
         
-      printf("\ncqe->user_data: %llu\n", cqe->user_data);
-      printf("cqe->res: %i\n", cqe->res);
+      // printf("\ncqe->user_data: %llu\n", cqe->user_data);
+      // printf("cqe->res: %i\n", cqe->res);
 
       // thread t([&]() {
 	    
@@ -162,14 +162,19 @@ int main(void)
 
       // });
 
-      // while(1){
-      //       sleep(1);
+      while(1){
+            // sleep(1);
 
-      //       // auto c = __sync_fetch_and_and(&context_ptr->count, zero)/1e6;
-      //       auto c = count.exchange(0)/1e6;
+            int cqe_count = io_uring_wait_cqe_nr(&ring, cqes, batch_size);
+            count += cqe_count;
+            printf("recv %d\n", cqe_count);
+            io_uring_cq_advance(&ring, cqe_count);
 
-      //       cout << c << endl;
-      // }
+            // auto c = __sync_fetch_and_and(&context_ptr->count, zero)/1e6;
+            // auto c = count.exchange(0)/1e6;
+
+            // cout << c << endl;
+      }
 
       return 0;
 }     
