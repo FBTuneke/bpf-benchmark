@@ -170,7 +170,7 @@ int main(void)
       io_uring_prep_nop(sqe);
 	sqe->off = PROG_OFFSET;
 	sqe->opcode = IORING_OP_BPF;
-      sqe->flags = 0;
+      sqe->flags = IOSQE_IO_HARDLINK;
       sqe->cq_idx = SINK_CQ_IDX;
 
       printf("Vor First Submit aus Userspace\n");
@@ -198,7 +198,7 @@ int main(void)
                   int sqe_count = io_uring_submit_and_wait(&ring, 3000);
                   int cqe_count = io_uring_peek_batch_cqe(&ring, cqes, 3000);
                   count += cqe_count;
-                  printf("recv %d\n", cqe_count);
+                  //printf("recv %d\n", cqe_count);
                   io_uring_cq_advance(&ring, cqe_count);
             }
 

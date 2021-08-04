@@ -65,10 +65,10 @@ int bpf_bench(struct io_uring_bpf_ctx *ctx)
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));   
       }
 
-      if(cnt < 10){
+      if(cnt < 1000){
             io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);
             sqe.cq_idx = SINK_CQ_IDX;
-            sqe.flags = 0;
+            sqe.flags = IOSQE_IO_HARDLINK;
             sqe.user_data = 2007;
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));
       }
