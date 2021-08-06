@@ -80,7 +80,8 @@ int main(void)
       
       atomic<uint64_t> count(0);
 
-      int fd = open("/dev/null", O_WRONLY);
+      //int fd = open("/dev/null", O_WRONLY);
+      int fd = open("test.txt", O_WRONLY | O_CREAT, 0777);
       // unsigned batch_size = atoi(getenv("BATCHSIZE") ?: "1");
       unsigned batch_size = MAX_LOOP;
       bool with_link = !!getenv("IO_LINK");

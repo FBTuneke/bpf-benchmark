@@ -59,13 +59,13 @@ int bpf_bench(struct io_uring_bpf_ctx *ctx)
       {
             io_uring_prep_rw(IORING_OP_WRITE, &sqe, context_ptr->fd, context_ptr->char_to_send_userspace_ptr, 1, 0);
             sqe.cq_idx = DEFAULT_CQ_IDX;
-            // if(context_ptr->with_link) sqe.flags = IOSQE_IO_HARDLINK;                 
+            //if(context_ptr->with_link == 1) sqe.flags = IOSQE_IO_HARDLINK;                 
             sqe.flags = IOSQE_IO_HARDLINK;                 
             sqe.user_data = i;
             iouring_queue_sqe(ctx, &sqe, sizeof(sqe));   
       }
 
-      if(cnt < 1000){
+      if(cnt < 2000){
             io_uring_prep_bpf(&sqe, PROG_OFFSET, 0);
             sqe.cq_idx = SINK_CQ_IDX;
             sqe.flags = IOSQE_IO_HARDLINK;
